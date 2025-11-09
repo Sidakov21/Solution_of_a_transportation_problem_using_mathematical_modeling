@@ -81,6 +81,13 @@ namespace УП_Транспортная_задача__методы_Сев_зап
                 int m = int.Parse(SuppliersCountBox.Text);
                 int n = int.Parse(ConsumersCountBox.Text);
 
+                // Проверка на положительные размеры
+                if (m <= 0 || n <= 0)
+                {
+                    MessageBox.Show("Количество поставщиков и потребителей должно быть положительным числом!");
+                    return;
+                }
+
                 // Создаем матрицу стоимостей
                 var matrixRows = new System.Collections.ObjectModel.ObservableCollection<CostRow>();
 
@@ -145,8 +152,9 @@ namespace УП_Транспортная_задача__методы_Сев_зап
                 int m = int.Parse(SuppliersCountBox.Text);
                 int n = int.Parse(ConsumersCountBox.Text);
 
-                // 1. Считываем матрицу стоимостей
+                // 1. Считываем и проверяем матрицу стоимостей
                 costMatrix = new int[m, n];
+                bool hasNegativeCosts = false;
                 if (CostMatrixGrid.ItemsSource is System.Collections.ObjectModel.ObservableCollection<CostRow> costRows)
                 {
                     for (int i = 0; i < m; i++)
@@ -154,29 +162,75 @@ namespace УП_Транспортная_задача__методы_Сев_зап
                         var row = costRows[i];
                         for (int j = 0; j < n; j++)
                         {
-                            costMatrix[i, j] = row.Стоимости[j];
+                            int value = row.Стоимости[j];
+                            if (value < 0)
+                            {
+                                hasNegativeCosts = true;
+                                value = 0; // Заменяем отрицательные на 0 для продолжения расчета
+                            }
+                            costMatrix[i, j] = value;
                         }
                     }
                 }
 
-                // 2. Считываем запасы
+                if (hasNegativeCosts)
+                {
+                    MessageBox.Show("Обнаружены отрицательные стоимости! Они были заменены на 0.", "Предупреждение",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+
+                // 2. Считываем и проверяем запасы
                 supply = new int[m];
+                bool hasNegativeSupply = false;
                 if (SupplyGrid.ItemsSource is System.Collections.ObjectModel.ObservableCollection<SupplyItem> supplyItems)
                 {
                     for (int i = 0; i < m; i++)
                     {
-                        supply[i] = supplyItems[i].Zapas;
+                        int value = supplyItems[i].Zapas;
+                        if (value < 0)
+                        {
+                            hasNegativeSupply = true;
+                            value = 0; // Заменяем отрицательные на 0
+                        }
+                        supply[i] = value;
                     }
                 }
 
-                // 3. Считываем потребности
+                if (hasNegativeSupply)
+                {
+                    MessageBox.Show("Обнаружены отрицательные запасы! Они были заменены на 0.", "Предупреждение",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+
+                // 3. Считываем и проверяем потребности
                 demand = new int[n];
+                bool hasNegativeDemand = false;
                 if (DemandGrid.ItemsSource is System.Collections.ObjectModel.ObservableCollection<DemandItem> demandItems)
                 {
                     for (int j = 0; j < n; j++)
                     {
-                        demand[j] = demandItems[j].Potrebnost;
+                        int value = demandItems[j].Potrebnost;
+                        if (value < 0)
+                        {
+                            hasNegativeDemand = true;
+                            value = 0; // Заменяем отрицательные на 0
+                        }
+                        demand[j] = value;
                     }
+                }
+
+                if (hasNegativeDemand)
+                {
+                    MessageBox.Show("Обнаружены отрицательные потребности! Они были заменены на 0.", "Предупреждение",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+
+                // Проверяем, что есть ненулевые запасы и потребности
+                if (supply.Sum() == 0 || demand.Sum() == 0)
+                {
+                    MessageBox.Show("Сумма запасов или потребностей равна нулю! Невозможно решить задачу.", "Ошибка",
+                        MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
                 }
 
                 // Проверяем, что данные считаны
@@ -280,7 +334,6 @@ namespace УП_Транспортная_задача__методы_Сев_зап
             return sum;
         }
 
-
         private void DisplayBalanceInfo(int[] supply, int[] demand)
         {
             int sumA = supply.Sum();
@@ -339,21 +392,6 @@ namespace УП_Транспортная_задача__методы_Сев_зап
                 if (d[minJ] == 0) for (int i = 0; i < m; i++) used[i, minJ] = true;
             }
             return plan;
-        }
-
-        private List<object> ConvertToRows(int[,] plan)
-        {
-            var list = new List<object>();
-            for (int i = 0; i < plan.GetLength(0); i++)
-            {
-                dynamic row = new System.Dynamic.ExpandoObject();
-                var rowDict = row as IDictionary<string, object>;
-                rowDict["A"] = $"A{i + 1}";
-                for (int j = 0; j < plan.GetLength(1); j++)
-                    rowDict[$"B{j + 1}"] = plan[i, j] == 0 ? "" : plan[i, j].ToString();
-                list.Add(row);
-            }
-            return list;
         }
 
         private int CalcTotalCost(int[,] plan, int[,] cost)
