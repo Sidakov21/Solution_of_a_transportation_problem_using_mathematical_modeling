@@ -1,64 +1,65 @@
 ﻿<Window x:Class="УП_Транспортная_задача__методы_Сев_зап_и_Наимен__по_ММ.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:УП_Транспортная_задача__методы_Сев_зап_и_Наимен__по_ММ"
-        mc:Ignorable="d"
-        Title="Транспортная задача" Height="600" Width="900">
+        Title="Транспортная задача" Height="700" Width="1000">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <Grid Margin="10">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
+        <StackPanel Margin="10">
 
-            <!-- Исходная матрица -->
-            <TextBlock Text="Исходная матрица (стоимости перевозок)" 
+            <!-- Ввод размеров -->
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <TextBlock Text="Поставщики:" FontSize="16" Margin="0,0,10,0"/>
+                <TextBox x:Name="SuppliersCountBox" Width="50" Text="3" Margin="0,0,20,0"/>
+                <TextBlock Text="Потребители:" FontSize="16" Margin="0,0,10,0"/>
+                <TextBox x:Name="ConsumersCountBox" Width="50" Text="5" Margin="0,0,20,0"/>
+                <Button Content="Создать матрицу" Width="150" Click="CreateMatrix_Click"/>
+            </StackPanel>
+
+            <!-- Матрица -->
+            <TextBlock Text="Введите стоимости перевозок (матрица):" 
                        FontSize="18" FontWeight="Bold" Margin="0,0,0,5"/>
-
-            <DataGrid x:Name="DataGridMatrix"
-                      Grid.Row="1"
+            <DataGrid x:Name="CostMatrixGrid"
                       AutoGenerateColumns="True"
-                      IsReadOnly="True"
-                      FontSize="16"
                       CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      FontSize="16"
                       Margin="0,0,0,10"/>
 
-            <!-- Сбалансированность -->
-            <Label x:Name="BalanceLabel"
-                   Grid.Row="2"
-                   FontSize="18"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center"
-                   FontWeight="Bold"
-                   Margin="0,10,0,10"/>
+            <!-- Запасы и потребности -->
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <StackPanel>
+                    <TextBlock Text="Запасы (A):" FontSize="16"/>
+                    <DataGrid x:Name="SupplyGrid"
+                              AutoGenerateColumns="True"
+                              CanUserAddRows="False"
+                              CanUserDeleteRows="False"
+                              Width="200" FontSize="16"/>
+                </StackPanel>
 
-            <!-- Метод Северо-Западного угла -->
-            <StackPanel Grid.Row="3" Margin="0,10,0,10">
-                <TextBlock Text="Опорный план (метод Северо-Западного угла)" 
-                           FontSize="18" FontWeight="Bold" Margin="0,0,0,5"/>
-                <DataGrid x:Name="DataGridNorthWest"
-                          AutoGenerateColumns="True"
-                          IsReadOnly="True"
-                          FontSize="16"
-                          CanUserAddRows="False"/>
+                <StackPanel Margin="20,0,0,0">
+                    <TextBlock Text="Потребности (B):" FontSize="16"/>
+                    <DataGrid x:Name="DemandGrid"
+                              AutoGenerateColumns="True"
+                              CanUserAddRows="False"
+                              CanUserDeleteRows="False"
+                              Width="200" FontSize="16"/>
+                </StackPanel>
             </StackPanel>
 
-            <!-- Метод Минимальных элементов -->
-            <StackPanel Grid.Row="4" Margin="0,10,0,10">
-                <TextBlock Text="Опорный план (метод минимальных элементов)" 
-                           FontSize="18" FontWeight="Bold" Margin="0,0,0,5"/>
-                <DataGrid x:Name="DataGridLeastCost"
-                          AutoGenerateColumns="True"
-                          IsReadOnly="True"
-                          FontSize="16"
-                          CanUserAddRows="False"/>
+            <Button Content="Рассчитать" FontSize="16" Width="200" Click="Calculate_Click" Margin="0,10,0,10"/>
+
+            <Label x:Name="BalanceLabel" FontSize="18" HorizontalAlignment="Center"/>
+
+            <!-- Результаты -->
+            <StackPanel Margin="0,10,0,0">
+                <TextBlock Text="Опорный план (Метод северо-западного угла)" FontSize="18" FontWeight="Bold"/>
+                <DataGrid x:Name="NorthWestGrid" AutoGenerateColumns="True" IsReadOnly="True" FontSize="16"/>
+                <TextBlock x:Name="NorthWestCostLabel" FontSize="16" FontWeight="Bold" Margin="0,5,0,0"/>
+
+                <TextBlock Text="Опорный план (Метод минимальных элементов)" FontSize="18" FontWeight="Bold" Margin="0,10,0,0"/>
+                <DataGrid x:Name="LeastCostGrid" AutoGenerateColumns="True" IsReadOnly="True" FontSize="16"/>
+                <TextBlock x:Name="LeastCostLabel" FontSize="16" FontWeight="Bold" Margin="0,5,0,0"/>
             </StackPanel>
-        </Grid>
+
+        </StackPanel>
     </ScrollViewer>
 </Window>

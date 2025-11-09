@@ -1,219 +1,368 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 
 namespace УП_Транспортная_задача__методы_Сев_зап_и_Наимен__по_ММ
 {
     public partial class MainWindow : Window
     {
-        // ---- Класс для отображения исходной матрицы ----
-        public class RowData
+        private int[,] costMatrix;
+        private int[] supply;
+        private int[] demand;
+
+        public class CostRow : INotifyPropertyChanged
         {
-            public string A { get; set; }
-            public int B1 { get; set; }
-            public int B2 { get; set; }
-            public int B3 { get; set; }
-            public int B4 { get; set; }
-            public int B5 { get; set; }
-            public int Запас { get; set; }
+            public string Поставщик { get; set; }
+
+            private List<int> _стоимости;
+            public List<int> Стоимости
+            {
+                get => _стоимости;
+                set { _стоимости = value; OnPropertyChanged(nameof(Стоимости)); }
+            }
+
+            public event PropertyChangedEventHandler PropertyChanged;
+            protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
 
-        // ---- Класс для отображения опорных планов ----
-        public class PlanRow
+        public class SupplyItem : INotifyPropertyChanged
         {
-            public string A { get; set; }
-            public string B1 { get; set; }
-            public string B2 { get; set; }
-            public string B3 { get; set; }
-            public string B4 { get; set; }
-            public string B5 { get; set; }
+            private int _zapas;
+            public int Zapas
+            {
+                get => _zapas;
+                set
+                {
+                    _zapas = value;
+                    OnPropertyChanged(nameof(Zapas));
+                }
+            }
+
+            public event PropertyChangedEventHandler PropertyChanged;
+            protected virtual void OnPropertyChanged(string propertyName)
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            }
+        }
+
+        public class DemandItem : INotifyPropertyChanged
+        {
+            private int _potrebnost;
+            public int Potrebnost
+            {
+                get => _potrebnost;
+                set
+                {
+                    _potrebnost = value;
+                    OnPropertyChanged(nameof(Potrebnost));
+                }
+            }
+
+            public event PropertyChangedEventHandler PropertyChanged;
+            protected virtual void OnPropertyChanged(string propertyName)
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            }
         }
 
         public MainWindow()
         {
             InitializeComponent();
-            LoadDataAndDisplay();
         }
 
-        // ---- Основной метод загрузки данных ----
-        private void LoadDataAndDisplay()
+        private void CreateMatrix_Click(object sender, RoutedEventArgs e)
         {
-            // Стоимость перевозок (матрица)
-            int[,] D =
+            try
             {
-                { 40, 19, 25, 25, 35 },
-                { 49, 26, 27, 18, 38 },
-                { 46, 27, 36, 40, 45 }
-            };
+                int m = int.Parse(SuppliersCountBox.Text);
+                int n = int.Parse(ConsumersCountBox.Text);
 
-            // Запасы (поставщики)
-            int[] supply = { 230, 250, 170 };
+                // Создаем матрицу стоимостей
+                var matrixRows = new System.Collections.ObjectModel.ObservableCollection<CostRow>();
 
-            // Потребности (покупатели)
-            int[] demand = { 140, 90, 160, 110, 150 };
-
-            DisplayBalanceInfo(supply, demand);
-            DisplayMatrix(D, supply);
-            DisplayNorthWestPlan(D, supply, demand);
-            DisplayLeastCostPlan(D, supply, demand);
-        }
-
-        // ---- Проверка сбалансированности задачи ----
-        private void DisplayBalanceInfo(int[] supply, int[] demand)
-        {
-            int supplySum = supply.Sum();
-            int demandSum = demand.Sum();
-
-            if (supplySum == demandSum)
-            {
-                BalanceLabel.Content = $"Задача сбалансирована ✅ (Σa = {supplySum}, Σb = {demandSum})";
-                BalanceLabel.Foreground = Brushes.Green;
-            }
-            else
-            {
-                BalanceLabel.Content = $"Задача несбалансирована ❌ (Σa = {supplySum}, Σb = {demandSum})";
-                BalanceLabel.Foreground = Brushes.Red;
-            }
-        }
-
-        // ---- Отображение исходной матрицы ----
-        private void DisplayMatrix(int[,] D, int[] supply)
-        {
-            var rows = new List<RowData>();
-
-            for (int i = 0; i < D.GetLength(0); i++)
-            {
-                rows.Add(new RowData
-                {
-                    A = $"A{i + 1}",
-                    B1 = D[i, 0],
-                    B2 = D[i, 1],
-                    B3 = D[i, 2],
-                    B4 = D[i, 3],
-                    B5 = D[i, 4],
-                    Запас = supply[i]
-                });
-            }
-
-            DataGridMatrix.ItemsSource = rows;
-        }
-
-        // ---- Метод Северо-Западного угла ----
-        private void DisplayNorthWestPlan(int[,] D, int[] supply, int[] demand)
-        {
-            int[,] plan = NorthWestCorner(supply, demand);
-            DataGridNorthWest.ItemsSource = ConvertPlanToRows(plan);
-        }
-
-        private int[,] NorthWestCorner(int[] supplyArr, int[] demandArr)
-        {
-            int m = supplyArr.Length;
-            int n = demandArr.Length;
-            int[,] plan = new int[m, n];
-
-            int[] supply = (int[])supplyArr.Clone();
-            int[] demand = (int[])demandArr.Clone();
-
-            int i = 0, j = 0;
-
-            while (i < m && j < n)
-            {
-                int x = Math.Min(supply[i], demand[j]);
-                plan[i, j] = x;
-                supply[i] -= x;
-                demand[j] -= x;
-
-                if (supply[i] == 0 && demand[j] == 0)
-                {
-                    i++;
-                    j++;
-                }
-                else if (supply[i] == 0)
-                    i++;
-                else
-                    j++;
-            }
-
-            return plan;
-        }
-
-        // ---- Метод минимальных элементов ----
-        private void DisplayLeastCostPlan(int[,] D, int[] supply, int[] demand)
-        {
-            int[,] plan = LeastCostMethod(D, supply, demand);
-            DataGridLeastCost.ItemsSource = ConvertPlanToRows(plan);
-        }
-
-        private int[,] LeastCostMethod(int[,] cost, int[] supplyArr, int[] demandArr)
-        {
-            int m = supplyArr.Length;
-            int n = demandArr.Length;
-            int[,] plan = new int[m, n];
-            bool[,] used = new bool[m, n];
-
-            int[] supply = (int[])supplyArr.Clone();
-            int[] demand = (int[])demandArr.Clone();
-
-            while (supply.Sum() > 0 && demand.Sum() > 0)
-            {
-                int minI = -1, minJ = -1;
-                int minCost = int.MaxValue;
-
-                // Находим минимальную стоимость
                 for (int i = 0; i < m; i++)
                 {
-                    for (int j = 0; j < n; j++)
+                    var row = new CostRow
                     {
-                        if (!used[i, j] && cost[i, j] < minCost)
+                        Поставщик = $"A{i + 1}",
+                        Стоимости = Enumerable.Repeat(0, n).ToList()
+                    };
+                    matrixRows.Add(row);
+                }
+
+                CostMatrixGrid.ItemsSource = matrixRows;
+
+                // Создание столбцов вручную
+                CostMatrixGrid.Columns.Clear();
+                CostMatrixGrid.Columns.Add(new DataGridTextColumn
+                {
+                    Header = "Поставщик",
+                    Binding = new System.Windows.Data.Binding("Поставщик"),
+                    IsReadOnly = true
+                });
+
+                for (int j = 0; j < n; j++)
+                {
+                    CostMatrixGrid.Columns.Add(new DataGridTextColumn
+                    {
+                        Header = $"B{j + 1}",
+                        Binding = new System.Windows.Data.Binding($"Стоимости[{j}]"),
+                    });
+                }
+
+                // Запасы и потребности
+                var supplyItems = new System.Collections.ObjectModel.ObservableCollection<SupplyItem>();
+                var demandItems = new System.Collections.ObjectModel.ObservableCollection<DemandItem>();
+
+                for (int i = 0; i < m; i++)
+                    supplyItems.Add(new SupplyItem { Zapas = 0 });
+
+                for (int j = 0; j < n; j++)
+                    demandItems.Add(new DemandItem { Potrebnost = 0 });
+
+                SupplyGrid.ItemsSource = supplyItems;
+                DemandGrid.ItemsSource = demandItems;
+
+                // Настройка AutoGenerateColumns для SupplyGrid и DemandGrid
+                SupplyGrid.AutoGenerateColumns = true;
+                DemandGrid.AutoGenerateColumns = true;
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при создании матрицы: {ex.Message}");
+            }
+        }
+
+        private void Calculate_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                int m = int.Parse(SuppliersCountBox.Text);
+                int n = int.Parse(ConsumersCountBox.Text);
+
+                // 1. Считываем матрицу стоимостей
+                costMatrix = new int[m, n];
+                if (CostMatrixGrid.ItemsSource is System.Collections.ObjectModel.ObservableCollection<CostRow> costRows)
+                {
+                    for (int i = 0; i < m; i++)
+                    {
+                        var row = costRows[i];
+                        for (int j = 0; j < n; j++)
                         {
-                            minCost = cost[i, j];
-                            minI = i;
-                            minJ = j;
+                            costMatrix[i, j] = row.Стоимости[j];
                         }
                     }
                 }
 
-                if (minI == -1 || minJ == -1)
-                    break;
+                // 2. Считываем запасы
+                supply = new int[m];
+                if (SupplyGrid.ItemsSource is System.Collections.ObjectModel.ObservableCollection<SupplyItem> supplyItems)
+                {
+                    for (int i = 0; i < m; i++)
+                    {
+                        supply[i] = supplyItems[i].Zapas;
+                    }
+                }
 
-                int x = Math.Min(supply[minI], demand[minJ]);
-                plan[minI, minJ] = x;
+                // 3. Считываем потребности
+                demand = new int[n];
+                if (DemandGrid.ItemsSource is System.Collections.ObjectModel.ObservableCollection<DemandItem> demandItems)
+                {
+                    for (int j = 0; j < n; j++)
+                    {
+                        demand[j] = demandItems[j].Potrebnost;
+                    }
+                }
 
-                supply[minI] -= x;
-                demand[minJ] -= x;
+                // Проверяем, что данные считаны
+                if (supply == null || demand == null || costMatrix == null)
+                {
+                    MessageBox.Show("Ошибка: данные не были правильно инициализированы");
+                    return;
+                }
 
-                // Отмечаем использованные строки/столбцы
-                if (supply[minI] == 0)
-                    for (int j = 0; j < n; j++) used[minI, j] = true;
+                // Отображаем информацию о балансе
+                DisplayBalanceInfo(supply, demand);
 
-                if (demand[minJ] == 0)
-                    for (int i = 0; i < m; i++) used[i, minJ] = true;
+                // Вычисляем опорные планы
+                var planNW = NorthWestCorner(supply, demand);
+                var planLC = LeastCostMethod(costMatrix, supply, demand);
+
+                // Отображаем результаты с настройкой столбцов
+                DisplayPlan(NorthWestGrid, planNW, "Северо-западный угол");
+                DisplayPlan(LeastCostGrid, planLC, "Минимальный элемент");
+
+                // Вычисляем и отображаем стоимость
+                NorthWestCostLabel.Text = $"Стоимость (С-З угол): {CalcTotalCost(planNW, costMatrix)}";
+                LeastCostLabel.Text = $"Стоимость (Мин. элементов): {CalcTotalCost(planLC, costMatrix)}";
+
+                // Добавим отладочную информацию
+                Console.WriteLine($"Матрица стоимостей: {m}x{n}");
+                Console.WriteLine($"Запасы: {string.Join(", ", supply)}");
+                Console.WriteLine($"Потребности: {string.Join(", ", demand)}");
+                Console.WriteLine($"План С-З: сумма = {SumPlan(planNW)}");
+                Console.WriteLine($"План Мин: сумма = {SumPlan(planLC)}");
+
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при расчете: {ex.Message}\n\nДетали: {ex.StackTrace}");
+            }
+        }
 
+        // Новый метод для отображения планов с настройкой столбцов
+        private void DisplayPlan(DataGrid dataGrid, int[,] plan, string methodName)
+        {
+            try
+            {
+                int m = plan.GetLength(0);
+                int n = plan.GetLength(1);
+
+                // Создаем коллекцию для отображения
+                var displayRows = new System.Collections.ObjectModel.ObservableCollection<dynamic>();
+
+                for (int i = 0; i < m; i++)
+                {
+                    dynamic row = new System.Dynamic.ExpandoObject();
+                    var rowDict = row as IDictionary<string, object>;
+                    rowDict["Поставщик"] = $"A{i + 1}";
+
+                    for (int j = 0; j < n; j++)
+                    {
+                        rowDict[$"B{j + 1}"] = plan[i, j] == 0 ? "" : plan[i, j].ToString();
+                    }
+                    displayRows.Add(row);
+                }
+
+                dataGrid.ItemsSource = displayRows;
+
+                // Настраиваем столбцы
+                dataGrid.Columns.Clear();
+                dataGrid.Columns.Add(new DataGridTextColumn
+                {
+                    Header = "Поставщик",
+                    Binding = new System.Windows.Data.Binding("Поставщик"),
+                    IsReadOnly = true,
+                    Width = 100
+                });
+
+                for (int j = 0; j < n; j++)
+                {
+                    dataGrid.Columns.Add(new DataGridTextColumn
+                    {
+                        Header = $"B{j + 1}",
+                        Binding = new System.Windows.Data.Binding($"B{j + 1}"),
+                        IsReadOnly = true,
+                        Width = 60
+                    });
+                }
+
+                Console.WriteLine($"{methodName}: отображено {m} строк, {n} столбцов");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при отображении плана {methodName}: {ex.Message}");
+            }
+        }
+
+        // Вспомогательный метод для отладки - подсчет суммы плана
+        private int SumPlan(int[,] plan)
+        {
+            int sum = 0;
+            for (int i = 0; i < plan.GetLength(0); i++)
+                for (int j = 0; j < plan.GetLength(1); j++)
+                    sum += plan[i, j];
+            return sum;
+        }
+
+
+        private void DisplayBalanceInfo(int[] supply, int[] demand)
+        {
+            int sumA = supply.Sum();
+            int sumB = demand.Sum();
+            if (sumA == sumB)
+            {
+                BalanceLabel.Content = $"Задача сбалансирована ✅ (ΣA={sumA}, ΣB={sumB})";
+                BalanceLabel.Foreground = Brushes.Green;
+            }
+            else
+            {
+                BalanceLabel.Content = $"Задача несбалансирована ❌ (ΣA={sumA}, ΣB={sumB})";
+                BalanceLabel.Foreground = Brushes.Red;
+            }
+        }
+
+        private int[,] NorthWestCorner(int[] supplyArr, int[] demandArr)
+        {
+            int m = supplyArr.Length, n = demandArr.Length;
+            int[,] plan = new int[m, n];
+            int[] s = (int[])supplyArr.Clone(), d = (int[])demandArr.Clone();
+            int i = 0, j = 0;
+
+            while (i < m && j < n)
+            {
+                int x = Math.Min(s[i], d[j]);
+                plan[i, j] = x;
+                s[i] -= x; d[j] -= x;
+                if (s[i] == 0 && d[j] == 0) { i++; j++; }
+                else if (s[i] == 0) i++;
+                else j++;
+            }
             return plan;
         }
 
-        // ---- Вспомогательный метод: конвертация матрицы плана в строки ----
-        private List<PlanRow> ConvertPlanToRows(int[,] plan)
+        private int[,] LeastCostMethod(int[,] cost, int[] supplyArr, int[] demandArr)
         {
-            var list = new List<PlanRow>();
+            int m = supplyArr.Length, n = demandArr.Length;
+            int[,] plan = new int[m, n];
+            bool[,] used = new bool[m, n];
+            int[] s = (int[])supplyArr.Clone(), d = (int[])demandArr.Clone();
 
+            while (s.Sum() > 0 && d.Sum() > 0)
+            {
+                int minI = -1, minJ = -1, min = int.MaxValue;
+                for (int i = 0; i < m; i++)
+                    for (int j = 0; j < n; j++)
+                        if (!used[i, j] && cost[i, j] < min)
+                        { min = cost[i, j]; minI = i; minJ = j; }
+
+                int x = Math.Min(s[minI], d[minJ]);
+                plan[minI, minJ] = x;
+                s[minI] -= x; d[minJ] -= x;
+
+                if (s[minI] == 0) for (int j = 0; j < n; j++) used[minI, j] = true;
+                if (d[minJ] == 0) for (int i = 0; i < m; i++) used[i, minJ] = true;
+            }
+            return plan;
+        }
+
+        private List<object> ConvertToRows(int[,] plan)
+        {
+            var list = new List<object>();
             for (int i = 0; i < plan.GetLength(0); i++)
             {
-                list.Add(new PlanRow
-                {
-                    A = $"A{i + 1}",
-                    B1 = plan[i, 0] == 0 ? "" : plan[i, 0].ToString(),
-                    B2 = plan[i, 1] == 0 ? "" : plan[i, 1].ToString(),
-                    B3 = plan[i, 2] == 0 ? "" : plan[i, 2].ToString(),
-                    B4 = plan[i, 3] == 0 ? "" : plan[i, 3].ToString(),
-                    B5 = plan[i, 4] == 0 ? "" : plan[i, 4].ToString()
-                });
+                dynamic row = new System.Dynamic.ExpandoObject();
+                var rowDict = row as IDictionary<string, object>;
+                rowDict["A"] = $"A{i + 1}";
+                for (int j = 0; j < plan.GetLength(1); j++)
+                    rowDict[$"B{j + 1}"] = plan[i, j] == 0 ? "" : plan[i, j].ToString();
+                list.Add(row);
             }
-
             return list;
+        }
+
+        private int CalcTotalCost(int[,] plan, int[,] cost)
+        {
+            int total = 0;
+            for (int i = 0; i < plan.GetLength(0); i++)
+                for (int j = 0; j < plan.GetLength(1); j++)
+                    total += plan[i, j] * cost[i, j];
+            return total;
         }
     }
 }
