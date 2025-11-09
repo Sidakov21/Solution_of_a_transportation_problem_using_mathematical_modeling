@@ -1,0 +1,9 @@
+﻿<Application x:Class="УП_Транспортная_задача__методы_Сев_зап_и_Наимен__по_ММ.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:УП_Транспортная_задача__методы_Сев_зап_и_Наимен__по_ММ"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+         
+    </Application.Resources>
+</Application>

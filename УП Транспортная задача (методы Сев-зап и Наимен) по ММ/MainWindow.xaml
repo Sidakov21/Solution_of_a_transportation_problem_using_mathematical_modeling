@@ -1,0 +1,64 @@
+﻿<Window x:Class="УП_Транспортная_задача__методы_Сев_зап_и_Наимен__по_ММ.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:УП_Транспортная_задача__методы_Сев_зап_и_Наимен__по_ММ"
+        mc:Ignorable="d"
+        Title="Транспортная задача" Height="600" Width="900">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Исходная матрица -->
+            <TextBlock Text="Исходная матрица (стоимости перевозок)" 
+                       FontSize="18" FontWeight="Bold" Margin="0,0,0,5"/>
+
+            <DataGrid x:Name="DataGridMatrix"
+                      Grid.Row="1"
+                      AutoGenerateColumns="True"
+                      IsReadOnly="True"
+                      FontSize="16"
+                      CanUserAddRows="False"
+                      Margin="0,0,0,10"/>
+
+            <!-- Сбалансированность -->
+            <Label x:Name="BalanceLabel"
+                   Grid.Row="2"
+                   FontSize="18"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   FontWeight="Bold"
+                   Margin="0,10,0,10"/>
+
+            <!-- Метод Северо-Западного угла -->
+            <StackPanel Grid.Row="3" Margin="0,10,0,10">
+                <TextBlock Text="Опорный план (метод Северо-Западного угла)" 
+                           FontSize="18" FontWeight="Bold" Margin="0,0,0,5"/>
+                <DataGrid x:Name="DataGridNorthWest"
+                          AutoGenerateColumns="True"
+                          IsReadOnly="True"
+                          FontSize="16"
+                          CanUserAddRows="False"/>
+            </StackPanel>
+
+            <!-- Метод Минимальных элементов -->
+            <StackPanel Grid.Row="4" Margin="0,10,0,10">
+                <TextBlock Text="Опорный план (метод минимальных элементов)" 
+                           FontSize="18" FontWeight="Bold" Margin="0,0,0,5"/>
+                <DataGrid x:Name="DataGridLeastCost"
+                          AutoGenerateColumns="True"
+                          IsReadOnly="True"
+                          FontSize="16"
+                          CanUserAddRows="False"/>
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</Window>

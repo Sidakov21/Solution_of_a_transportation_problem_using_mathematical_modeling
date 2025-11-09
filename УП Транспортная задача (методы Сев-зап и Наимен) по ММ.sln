@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36518.9 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "УП Транспортная задача (методы Сев-зап и Наимен) по ММ", "УП Транспортная задача (методы Сев-зап и Наимен) по ММ\УП Транспортная задача (методы Сев-зап и Наимен) по ММ.csproj", "{9F5B17F3-A865-4A1B-BEFF-B49DAED47668}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9F5B17F3-A865-4A1B-BEFF-B49DAED47668}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9F5B17F3-A865-4A1B-BEFF-B49DAED47668}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F5B17F3-A865-4A1B-BEFF-B49DAED47668}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9F5B17F3-A865-4A1B-BEFF-B49DAED47668}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {FAF2C202-D71C-4E0C-A63B-07E27E59F509}
+	EndGlobalSection
+EndGlobal
