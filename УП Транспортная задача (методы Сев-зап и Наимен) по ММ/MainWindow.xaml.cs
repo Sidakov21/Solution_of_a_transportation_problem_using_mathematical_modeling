@@ -13,6 +13,9 @@ namespace УП_Транспортная_задача__методы_Сев_зап
         private int[,] costMatrix;
         private int[] supply;
         private int[] demand;
+        private bool isBalanced;
+        private bool hasFictitiousSupplier;
+        private bool hasFictitiousConsumer;
 
         public class CostRow : INotifyPropertyChanged
         {
@@ -243,24 +246,44 @@ namespace УП_Транспортная_задача__методы_Сев_зап
                 // Отображаем информацию о балансе
                 DisplayBalanceInfo(supply, demand);
 
-                // Вычисляем опорные планы
-                var planNW = NorthWestCorner(supply, demand);
-                var planLC = LeastCostMethod(costMatrix, supply, demand);
+                // Балансируем задачу при необходимости
+                int[,] balancedCostMatrix;
+                int[] balancedSupply;
+                int[] balancedDemand;
 
-                // Отображаем результаты с настройкой столбцов
-                DisplayPlan(NorthWestGrid, planNW, "Северо-западный угол");
-                DisplayPlan(LeastCostGrid, planLC, "Минимальный элемент");
+                BalanceProblem(out balancedCostMatrix, out balancedSupply, out balancedDemand);
 
-                // Вычисляем и отображаем стоимость
-                NorthWestCostLabel.Text = $"Стоимость (С-З угол): {CalcTotalCost(planNW, costMatrix)}";
-                LeastCostLabel.Text = $"Стоимость (Мин. элементов): {CalcTotalCost(planLC, costMatrix)}";
+                // Выбираем метод решения на основе выбора пользователя
+                int[,] plan;
+                string methodName;
+
+                if (NorthWestRadio.IsChecked == true)
+                {
+                    plan = NorthWestCorner(balancedSupply, balancedDemand);
+                    methodName = "Северо-Западный угол";
+                }
+                else
+                {
+                    plan = LeastCostMethod(balancedCostMatrix, balancedSupply, balancedDemand);
+                    methodName = "Минимальный элемент";
+                }
+
+                // Отображаем результаты
+                DisplayPlan(ResultGrid, plan, methodName, balancedSupply.Length, balancedDemand.Length);
+                ResultTitle.Text = $"Опорный план ({methodName})";
+
+                // Вычисляем стоимость только для реальных перевозок (без фиктивных)
+                int totalCost = CalcTotalCost(plan, balancedCostMatrix, balancedSupply.Length, balancedDemand.Length);
+                ResultCostLabel.Text = $"Общая стоимость: {totalCost}";
 
                 // Добавим отладочную информацию
                 Console.WriteLine($"Матрица стоимостей: {m}x{n}");
                 Console.WriteLine($"Запасы: {string.Join(", ", supply)}");
                 Console.WriteLine($"Потребности: {string.Join(", ", demand)}");
-                Console.WriteLine($"План С-З: сумма = {SumPlan(planNW)}");
-                Console.WriteLine($"План Мин: сумма = {SumPlan(planLC)}");
+                Console.WriteLine($"Выбранный метод: {methodName}");
+                Console.WriteLine($"Сумма плана: {SumPlan(plan)}");
+                Console.WriteLine($"Сбалансированные запасы: {string.Join(", ", balancedSupply)}");
+                Console.WriteLine($"Сбалансированные потребности: {string.Join(", ", balancedDemand)}");
 
             }
             catch (Exception ex)
@@ -269,26 +292,133 @@ namespace УП_Транспортная_задача__методы_Сев_зап
             }
         }
 
-        // Новый метод для отображения планов с настройкой столбцов
-        private void DisplayPlan(DataGrid dataGrid, int[,] plan, string methodName)
+        /// <summary>
+        /// Балансировка транспортной задачи
+        /// </summary>
+        private void BalanceProblem(out int[,] balancedCostMatrix, out int[] balancedSupply, out int[] balancedDemand)
+        {
+            int totalSupply = supply.Sum();
+            int totalDemand = demand.Sum();
+
+            isBalanced = totalSupply == totalDemand;
+
+            if (isBalanced)
+            {
+                // Задача сбалансирована - используем исходные данные
+                balancedCostMatrix = costMatrix;
+                balancedSupply = supply;
+                balancedDemand = demand;
+                hasFictitiousSupplier = false;
+                hasFictitiousConsumer = false;
+                return;
+            }
+
+            if (totalSupply > totalDemand)
+            {
+                // Добавляем фиктивного потребителя
+                int m = supply.Length;
+                int n = demand.Length + 1;
+
+                balancedCostMatrix = new int[m, n];
+                balancedSupply = new int[m];
+                balancedDemand = new int[n];
+
+                // Копируем исходные данные
+                for (int i = 0; i < m; i++)
+                {
+                    balancedSupply[i] = supply[i];
+                    for (int j = 0; j < n - 1; j++)
+                    {
+                        balancedCostMatrix[i, j] = costMatrix[i, j];
+                    }
+                    // Стоимость до фиктивного потребителя = 0
+                    balancedCostMatrix[i, n - 1] = 0;
+                }
+
+                for (int j = 0; j < n - 1; j++)
+                {
+                    balancedDemand[j] = demand[j];
+                }
+                // Потребность фиктивного потребителя = разность
+                balancedDemand[n - 1] = totalSupply - totalDemand;
+
+                hasFictitiousSupplier = false;
+                hasFictitiousConsumer = true;
+            }
+            else
+            {
+                // Добавляем фиктивного поставщика
+                int m = supply.Length + 1;
+                int n = demand.Length;
+
+                balancedCostMatrix = new int[m, n];
+                balancedSupply = new int[m];
+                balancedDemand = new int[n];
+
+                // Копируем исходные данные
+                for (int i = 0; i < m - 1; i++)
+                {
+                    balancedSupply[i] = supply[i];
+                    for (int j = 0; j < n; j++)
+                    {
+                        balancedCostMatrix[i, j] = costMatrix[i, j];
+                    }
+                }
+
+                for (int j = 0; j < n; j++)
+                {
+                    balancedDemand[j] = demand[j];
+                }
+
+                // Запас фиктивного поставщика = разность
+                balancedSupply[m - 1] = totalDemand - totalSupply;
+                // Стоимость от фиктивного поставщика = 0
+                for (int j = 0; j < n; j++)
+                {
+                    balancedCostMatrix[m - 1, j] = 0;
+                }
+
+                hasFictitiousSupplier = true;
+                hasFictitiousConsumer = false;
+            }
+        }
+
+        private void DisplayPlan(DataGrid dataGrid, int[,] plan, string methodName, int rows, int cols)
         {
             try
             {
-                int m = plan.GetLength(0);
-                int n = plan.GetLength(1);
-
                 // Создаем коллекцию для отображения
                 var displayRows = new System.Collections.ObjectModel.ObservableCollection<dynamic>();
 
-                for (int i = 0; i < m; i++)
+                for (int i = 0; i < rows; i++)
                 {
                     dynamic row = new System.Dynamic.ExpandoObject();
                     var rowDict = row as IDictionary<string, object>;
-                    rowDict["Поставщик"] = $"A{i + 1}";
 
-                    for (int j = 0; j < n; j++)
+                    // Помечаем фиктивного поставщика
+                    if (hasFictitiousSupplier && i == rows - 1)
                     {
-                        rowDict[$"B{j + 1}"] = plan[i, j] == 0 ? "" : plan[i, j].ToString();
+                        rowDict["Поставщик"] = $"Ф{i + 1} (фикт.)";
+                    }
+                    else
+                    {
+                        rowDict["Поставщик"] = $"A{i + 1}";
+                    }
+
+                    for (int j = 0; j < cols; j++)
+                    {
+                        string columnName;
+                        // Помечаем фиктивного потребителя
+                        if (hasFictitiousConsumer && j == cols - 1)
+                        {
+                            columnName = $"Ф{j + 1} (фикт.)";
+                        }
+                        else
+                        {
+                            columnName = $"B{j + 1}";
+                        }
+
+                        rowDict[columnName] = plan[i, j] == 0 ? "" : plan[i, j].ToString();
                     }
                     displayRows.Add(row);
                 }
@@ -302,21 +432,32 @@ namespace УП_Транспортная_задача__методы_Сев_зап
                     Header = "Поставщик",
                     Binding = new System.Windows.Data.Binding("Поставщик"),
                     IsReadOnly = true,
-                    Width = 100
+                    Width = 120
                 });
 
-                for (int j = 0; j < n; j++)
+                for (int j = 0; j < cols; j++)
                 {
+                    string header;
+                    if (hasFictitiousConsumer && j == cols - 1)
+                    {
+                        header = $"Ф{j + 1} (фикт.)";
+                    }
+                    else
+                    {
+                        header = $"B{j + 1}";
+                    }
+
                     dataGrid.Columns.Add(new DataGridTextColumn
                     {
-                        Header = $"B{j + 1}",
-                        Binding = new System.Windows.Data.Binding($"B{j + 1}"),
+                        Header = header,
+                        Binding = new System.Windows.Data.Binding($"{header}"),
                         IsReadOnly = true,
-                        Width = 60
+                        Width = 70
                     });
                 }
 
-                Console.WriteLine($"{methodName}: отображено {m} строк, {n} столбцов");
+                Console.WriteLine($"{methodName}: отображено {rows} строк, {cols} столбцов");
+                Console.WriteLine($"Фиктивный поставщик: {hasFictitiousSupplier}, Фиктивный потребитель: {hasFictitiousConsumer}");
             }
             catch (Exception ex)
             {
@@ -343,10 +484,15 @@ namespace УП_Транспортная_задача__методы_Сев_зап
                 BalanceLabel.Content = $"Задача сбалансирована ✅ (ΣA={sumA}, ΣB={sumB})";
                 BalanceLabel.Foreground = Brushes.Green;
             }
+            else if (sumA > sumB)
+            {
+                BalanceLabel.Content = $"Задача несбалансирована ❌ (ΣA={sumA} > ΣB={sumB}) - добавим фиктивного потребителя";
+                BalanceLabel.Foreground = Brushes.Orange;
+            }
             else
             {
-                BalanceLabel.Content = $"Задача несбалансирована ❌ (ΣA={sumA}, ΣB={sumB})";
-                BalanceLabel.Foreground = Brushes.Red;
+                BalanceLabel.Content = $"Задача несбалансирована ❌ (ΣA={sumA} < ΣB={sumB}) - добавим фиктивного поставщика";
+                BalanceLabel.Foreground = Brushes.Orange;
             }
         }
 
@@ -394,12 +540,22 @@ namespace УП_Транспортная_задача__методы_Сев_зап
             return plan;
         }
 
-        private int CalcTotalCost(int[,] plan, int[,] cost)
+        private int CalcTotalCost(int[,] plan, int[,] cost, int rows, int cols)
         {
             int total = 0;
-            for (int i = 0; i < plan.GetLength(0); i++)
-                for (int j = 0; j < plan.GetLength(1); j++)
+            for (int i = 0; i < rows; i++)
+            {
+                // Пропускаем фиктивного поставщика при расчете стоимости
+                if (hasFictitiousSupplier && i == rows - 1) continue;
+
+                for (int j = 0; j < cols; j++)
+                {
+                    // Пропускаем фиктивного потребителя при расчете стоимости
+                    if (hasFictitiousConsumer && j == cols - 1) continue;
+
                     total += plan[i, j] * cost[i, j];
+                }
+            }
             return total;
         }
     }

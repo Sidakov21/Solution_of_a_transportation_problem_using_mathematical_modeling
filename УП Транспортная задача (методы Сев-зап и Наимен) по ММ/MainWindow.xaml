@@ -45,19 +45,24 @@
                 </StackPanel>
             </StackPanel>
 
+            <!-- Выбор метода решения -->
+            <StackPanel Orientation="Horizontal" Margin="0,10,0,10">
+                <TextBlock Text="Метод решения:" FontSize="16" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                <RadioButton x:Name="NorthWestRadio" Content="Северо-Западный угол" FontSize="14" 
+                           IsChecked="True" Margin="0,0,20,0" GroupName="Method"/>
+                <RadioButton x:Name="LeastCostRadio" Content="Минимальный элемент" FontSize="14" 
+                           GroupName="Method"/>
+            </StackPanel>
+
             <Button Content="Рассчитать" FontSize="16" Width="200" Click="Calculate_Click" Margin="0,10,0,10"/>
 
             <Label x:Name="BalanceLabel" FontSize="18" HorizontalAlignment="Center"/>
 
             <!-- Результаты -->
             <StackPanel Margin="0,10,0,0">
-                <TextBlock Text="Опорный план (Метод северо-западного угла)" FontSize="18" FontWeight="Bold"/>
-                <DataGrid x:Name="NorthWestGrid" AutoGenerateColumns="True" IsReadOnly="True" FontSize="16"/>
-                <TextBlock x:Name="NorthWestCostLabel" FontSize="16" FontWeight="Bold" Margin="0,5,0,0"/>
-
-                <TextBlock Text="Опорный план (Метод минимальных элементов)" FontSize="18" FontWeight="Bold" Margin="0,10,0,0"/>
-                <DataGrid x:Name="LeastCostGrid" AutoGenerateColumns="True" IsReadOnly="True" FontSize="16"/>
-                <TextBlock x:Name="LeastCostLabel" FontSize="16" FontWeight="Bold" Margin="0,5,0,0"/>
+                <TextBlock x:Name="ResultTitle" Text="Опорный план" FontSize="18" FontWeight="Bold"/>
+                <DataGrid x:Name="ResultGrid" AutoGenerateColumns="True" IsReadOnly="True" FontSize="16"/>
+                <TextBlock x:Name="ResultCostLabel" FontSize="16" FontWeight="Bold" Margin="0,5,0,0"/>
             </StackPanel>
 
         </StackPanel>
